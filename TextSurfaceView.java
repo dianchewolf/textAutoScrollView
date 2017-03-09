@@ -55,7 +55,7 @@ public class TextSurfaceView extends SurfaceView implements Callback {
     public final static int STATIC_CENTER = 0;
     public final static int STATIC_RIGHT = 2;
     /**
-     * 移动速度　1.5s　移动一次
+     * 移动速度　
      */
     private long speed = 100;
     /**
@@ -113,10 +113,13 @@ public class TextSurfaceView extends SurfaceView implements Callback {
      */
     private ArrayList<String> stringLines = new ArrayList<>();
     private ScheduledExecutorService scheduledExecutorService = null;
-    private float viewWidth =0;
+    private float viewWidth = 0;
     /**
      * @param context <see>默认滚动</see>
      */
+    Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    Paint mCalcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
     public TextSurfaceView(Context context) {
         super(context);
         init();
@@ -160,11 +163,10 @@ public class TextSurfaceView extends SurfaceView implements Callback {
 
     public void surfaceCreated(SurfaceHolder holder) {
 
-        y = getHeight() / 2 - getFontHeight(this.fontSize) / 2 +5;
-        viewWidth =getWidth();
+        y = getHeight() / 2 - getFontHeight(this.fontSize) / 2 + 5;
+        viewWidth = getWidth();
 
-        Paint paint = new Paint();
-        if (!TextUtils.isEmpty(content)){
+        if (!TextUtils.isEmpty(content)) {
             getTextInfo();
         }
 //            textContentWidth = paint.measureText(content);
@@ -204,21 +206,17 @@ public class TextSurfaceView extends SurfaceView implements Callback {
         if (mSurfaceHolder == null || canvas == null) {
             return;
         }
-
-        Paint paint = new Paint();
         //清屏
         canvas.drawColor(Color.TRANSPARENT, Mode.CLEAR);
-        //锯齿
-        paint.setAntiAlias(true);
         //字体
-        paint.setTypeface(Typeface.SANS_SERIF);
+        mPaint.setTypeface(Typeface.SANS_SERIF);
         //字体大小
-        paint.setTextSize(fontSize);
+        mPaint.setTextSize(fontSize);
         //字体颜色
-        paint.setColor(fontColor);
+        mPaint.setColor(fontColor);
         //字体透明度
-        paint.setAlpha(fontAlpha);
-        viewWidth =getWidth();
+        mPaint.setAlpha(fontAlpha);
+        viewWidth = getWidth();
         //滚动效果
 
         if (isMove) {
@@ -234,111 +232,113 @@ public class TextSurfaceView extends SurfaceView implements Callback {
                     x -= 2;
                 }
             } else if (orientation == MOVE_RIGHT) {//向右
-			if (x >= w - 5) {
-			    x = -conlen;
-			} else {
-			    x += 2;
-			}
-	    } else if (orientation == MOVE_TOP) {//向上
-			x = w/ 2 - (conlen) / 2;
-			if (y < -textHeigth) {
-			    y = getHeight() - 5;
-			} else {
-			    y -= 2;
-			}
-	    } else if (orientation == MOVE_BOTTOM) {//向下
-			if (y >= textHeigth) {
-			    y = -getHeight() - 5;
-			} else {
-			    y += 2;
-			}
-		    }
-		} else {
-		    //内容所占像素
-		    float conlen = textContentWidth;
-		    //组件宽度
-		    float w = viewWidth;
+                if (x >= w - 5) {
+                    x = -conlen;
+                } else {
+                    x += 2;
+                }
+            } else if (orientation == MOVE_TOP) {//向上
+                x = w / 2 - (conlen) / 2;
+                if (y < -textHeigth) {
+                    y = getHeight() - 5;
+                } else {
+                    y -= 2;
+                }
+            } else if (orientation == MOVE_BOTTOM) {//向下
+                if (y >= textHeigth) {
+                    y = -getHeight() - 5;
+                } else {
+                    y += 2;
+                }
+            }
+        } else {
+            //内容所占像素
+            float conlen = textContentWidth;
+            //组件宽度
+            float w = viewWidth;
 
-		    if (staticOri == STATIC_LEFT) {
-			x = 0;
-		    } else if (staticOri == STATIC_CENTER) {
-			x = w / 2 - conlen / 2;
-		    } else if (staticOri == STATIC_RIGHT) {
-			x = w - conlen;
-		    }
-		}
-		//画文字
-	//        canvas.drawText(content, x, y, paint);
-		for (int i = 0; i < stringLines.size(); i++) {
+            if (staticOri == STATIC_LEFT) {
+                x = 0;
+            } else if (staticOri == STATIC_CENTER) {
+                x = w / 2 - conlen / 2;
+            } else if (staticOri == STATIC_RIGHT) {
+                x = w - conlen;
+            }
+        }
+        //画文字
+        //        canvas.drawText(content, x, y, paint);
+        for (int i = 0; i < stringLines.size(); i++) {
 
-		    canvas.drawText(stringLines.get(i), x,
-			    y+ textFontHeight * i, paint);
-		}
-		//解锁显示
-		mSurfaceHolder.unlockCanvasAndPost(canvas);
-	    }
+            canvas.drawText(stringLines.get(i), x,
+                    y + textFontHeight * i, mPaint);
+        }
+        //解锁显示
+        mSurfaceHolder.unlockCanvasAndPost(canvas);
+    }
 
-	    private void closeSchedule() {
-		if (scheduledExecutorService != null) {
-		    scheduledExecutorService.shutdown();
-		    scheduledExecutorService = null;
-		}
-	    }
+    private void closeSchedule() {
+        if (scheduledExecutorService != null) {
+            scheduledExecutorService.shutdown();
+            scheduledExecutorService = null;
+        }
+    }
 
-	    private void beginSchedule() {
-		if (scheduledExecutorService == null) {
-		    scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-		    scheduledExecutorService.scheduleAtFixedRate(new ScrollTextThread(), 1000, 10, TimeUnit.MILLISECONDS);
-		}
-	    }
+    private void beginSchedule() {
+        if (scheduledExecutorService == null) {
+            scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+            scheduledExecutorService.scheduleAtFixedRate(new ScrollTextThread(), 100, speed, TimeUnit.MILLISECONDS);
+        }
+    }
 
-	    class ScrollTextThread implements Runnable {
-		@Override
-		public void run() {
-		    // TODO Auto-generated method stub
-		    synchronized (mSurfaceHolder) {
-			draw();
-		    }
-		}
-	    }
+    class ScrollTextThread implements Runnable {
+        @Override
+        public void run() {
+            // TODO Auto-generated method stub
+            synchronized (mSurfaceHolder) {
+                draw();
+            }
+        }
+    }
 
 
-	    /******************************
-	     * set get method
-	     ***********************************/
+    /******************************
+     * set get method
+     ***********************************/
 
-	    private int getOrientation() {
-		return orientation;
-	    }
+    private int getOrientation() {
+        return orientation;
+    }
 
-	    /**
-	     * @param orientation <li>可以选择类静态变量</li>
-	     *                    <li>1.MOVE_RIGHT 向右 </li>
-	     *                    <li>2.MOVE_LEFT  向左 (默认)</li>
-	     */
-	    public void setOrientation(int orientation) {
-		this.orientation = orientation;
-	    }
+    /**
+     * @param orientation <li>可以选择类静态变量</li>
+     *                    <li>1.MOVE_RIGHT 向右 </li>
+     *                    <li>2.MOVE_LEFT  向左 (默认)</li>
+     */
+    public void setOrientation(int orientation) {
+        this.orientation = orientation;
+    }
 
-	    /**
-	     * @param staticOri <li>choose</li>
-	     *                  <li> STATIC_LEFT STATIC_CENTER STATIC_RIGHT </li>
-	     */
-	    public void setStaticOri(int staticOri) {
-		this.staticOri = staticOri;
-	    }
+    /**
+     * @param staticOri <li>choose</li>
+     *                  <li> STATIC_LEFT STATIC_CENTER STATIC_RIGHT </li>
+     */
+    public void setStaticOri(int staticOri) {
+        this.staticOri = staticOri;
+    }
 
-	    private long getSpeed() {
-		return speed;
-	    }
+    private long getSpeed() {
+        return speed;
+    }
 
-	    /**
+    /**
      * @param speed <li>速度以毫秒计算两次移动之间的时间间隔</li>
-     *              <li>默认为 1500 毫秒</li>
-     *              <li>现在速度没有使用</li>
+     *              <li>1-10 </li>
      */
     public void setSpeed(long speed) {
-        this.speed = speed;
+        if(speed <1 || speed >10){
+            return;
+        }
+        this.speed = 100 / speed;
     }
 
     public boolean isMove() {
@@ -372,53 +372,52 @@ public class TextSurfaceView extends SurfaceView implements Callback {
     private void getTextInfo() {
         char ch;
         int istart = 0;
-        int w=0;
-        String tmpStr="";
-        if(viewWidth ==0){
+        int w = 0;
+        String tmpStr = "";
+        if (viewWidth == 0) {
             stringLines.add(content);
             return;
         }
-        float width =viewWidth;
+        float width = viewWidth;
         textFontHeight = getFontHeight(fontSize);
-        Paint paint = new Paint();
-        paint.setTextSize(fontSize);
+        mCalcPaint.setTextSize(fontSize);
         int count = content.length();
         stringLines.clear();
-        float maxWidth =0;
-        float tmpWidth =0;
+        float maxWidth = 0;
+        float tmpWidth = 0;
         for (int i = 0; i < count; i++) {
             ch = content.charAt(i);
             float[] widths = new float[1];
             String str = String.valueOf(ch);
-            paint.getTextWidths(str, widths);
+            mCalcPaint.getTextWidths(str, widths);
             if (ch == '\n') {
-                tmpStr =content.substring(istart, i);
+                tmpStr = content.substring(istart, i);
                 stringLines.add(tmpStr);
-                tmpWidth =paint.measureText(tmpStr);
-                maxWidth =maxWidth >tmpWidth ? maxWidth: tmpWidth;
+                tmpWidth = mCalcPaint.measureText(tmpStr);
+                maxWidth = maxWidth > tmpWidth ? maxWidth : tmpWidth;
                 istart = i + 1;
-                w=0;
+                w = 0;
             } else {
                 w += (int) Math.ceil(widths[0]);
-                if(w > (width-60)){
-                    tmpStr =content.substring(istart, i);
+                if (w > (width - 60)) {
+                    tmpStr = content.substring(istart, i);
                     stringLines.add(tmpStr);
-                    tmpWidth =paint.measureText(tmpStr);
-                    maxWidth =maxWidth >tmpWidth ? maxWidth: tmpWidth;
-                    istart=i;
-                    w=0;
-                }else if (i == count - 1) {
-                    tmpStr =content.substring(istart, count);
+                    tmpWidth = mCalcPaint.measureText(tmpStr);
+                    maxWidth = maxWidth > tmpWidth ? maxWidth : tmpWidth;
+                    istart = i;
+                    w = 0;
+                } else if (i == count - 1) {
+                    tmpStr = content.substring(istart, count);
                     stringLines.add(tmpStr);
-                    tmpWidth =paint.measureText(tmpStr);
-                    maxWidth =maxWidth >tmpWidth ? maxWidth: tmpWidth;
+                    tmpWidth = mCalcPaint.measureText(tmpStr);
+                    maxWidth = maxWidth > tmpWidth ? maxWidth : tmpWidth;
                 }
 
             }
         }
-        textHeigth =textFontHeight *stringLines.size();
-        textContentWidth =maxWidth;
-        y = getHeight() / 2 - textHeigth / 2  +5;
+        textHeigth = textFontHeight * stringLines.size();
+        textContentWidth = maxWidth;
+        y = getHeight() / 2 - textHeigth / 2 + 5;
     }
 
     public void setBgColor(String bgColor) {
@@ -465,9 +464,8 @@ public class TextSurfaceView extends SurfaceView implements Callback {
 
 
     public int getFontHeight(float fontSize) {
-        Paint paint = new Paint();
-        paint.setTextSize(fontSize);
-        Paint.FontMetrics fm = paint.getFontMetrics();
+        mCalcPaint.setTextSize(fontSize);
+        Paint.FontMetrics fm = mCalcPaint.getFontMetrics();
         return (int) Math.ceil(fm.descent - fm.top) + 2;
     }
 
