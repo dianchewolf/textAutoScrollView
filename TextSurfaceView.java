@@ -315,7 +315,9 @@ public class TextSurfaceView extends SurfaceView implements Callback {
      *                    <li>2.MOVE_LEFT  向左 (默认)</li>
      */
     public void setOrientation(int orientation) {
-        this.orientation = orientation;
+        @synchronized(this){
+            this.orientation = orientation;
+        }
     }
 
     /**
@@ -323,7 +325,9 @@ public class TextSurfaceView extends SurfaceView implements Callback {
      *                  <li> STATIC_LEFT STATIC_CENTER STATIC_RIGHT </li>
      */
     public void setStaticOri(int staticOri) {
-        this.staticOri = staticOri;
+        @synchronized(this){
+             this.staticOri = staticOri;
+        }
     }
 
     private long getSpeed() {
@@ -335,10 +339,12 @@ public class TextSurfaceView extends SurfaceView implements Callback {
      *              <li>1-10 </li>
      */
     public void setSpeed(long speed) {
-        if(speed <1 || speed >10){
-            return;
+        @synchronized(this){
+            if(speed <1 || speed >10){
+                return;
+            }
+            this.speed = 100 / speed;
         }
-        this.speed = 100 / speed;
     }
 
     public boolean isMove() {
@@ -349,14 +355,16 @@ public class TextSurfaceView extends SurfaceView implements Callback {
      * @param isMove <see>默认滚动</see>
      */
     public void setMove(boolean isMove) {
-        if (this.isMove == isMove) {
-            return;
-        }
-        this.isMove = isMove;
-        if (isMove) {
-            beginSchedule();
-        } else {
-            closeSchedule();
+        @synchronized(this){
+            if (this.isMove == isMove) {
+                return;
+             }
+            this.isMove = isMove;
+            if (isMove) {
+                beginSchedule();
+            } else {
+                closeSchedule();
+            }
         }
     }
 
@@ -365,8 +373,10 @@ public class TextSurfaceView extends SurfaceView implements Callback {
     }
 
     public void setContent(String content) {
-        this.content = content;
-        getTextInfo();
+        @synchronized(this){
+            this.content = content;
+            getTextInfo();
+        }
     }
 
     private void getTextInfo() {
@@ -421,49 +431,63 @@ public class TextSurfaceView extends SurfaceView implements Callback {
     }
 
     public void setBgColor(String bgColor) {
-        this.bgColor = Color.parseColor(bgColor);
-        if (mSurfaceHolder != null) {
-            setZOrderOnTop(true);
+        @synchronized(this){
+            this.bgColor = Color.parseColor(bgColor);
+             if (mSurfaceHolder != null) {
+                setZOrderOnTop(true);
 //            setZOrderMediaOverlay(true);
-            mSurfaceHolder.setFormat(PixelFormat.TRANSLUCENT);
+                mSurfaceHolder.setFormat(PixelFormat.TRANSLUCENT);
             //背景色
-            setBackgroundColor(this.bgColor);
+                setBackgroundColor(this.bgColor);
+            }
         }
     }
 
     public void setBgColor(int bgColor) {
-        this.bgColor = bgColor;
-        if (mSurfaceHolder != null) {
-            setZOrderOnTop(true);
+        @synchronized(this){
+            this.bgColor = bgColor;
+            if (mSurfaceHolder != null) {
+                setZOrderOnTop(true);
 //            setZOrderMediaOverlay(true);
-            mSurfaceHolder.setFormat(PixelFormat.TRANSLUCENT);
+                mSurfaceHolder.setFormat(PixelFormat.TRANSLUCENT);
             //背景色
-            setBackgroundColor(this.bgColor);
+               setBackgroundColor(this.bgColor);
+            }
         }
     }
 
     public void setBgalpha(int bgalpha) {
-        this.bgalpha = bgalpha;
+        @synchronized(this){
+            this.bgalpha = bgalpha;
+         }
     }
 
     public void setFontColor(String fontColor) {
-        this.fontColor = Color.parseColor(fontColor);
+         @synchronized(this){
+            this.fontColor = Color.parseColor(fontColor);
+         }
     }
 
     public void setFontColor(int fontColor) {
-        this.fontColor = fontColor;
+         @synchronized(this){
+            this.fontColor = fontColor;
+        }
     }
 
     public void setFontAlpha(int fontAlpha) {
-        this.fontAlpha = fontAlpha;
+         @synchronized(this){
+             this.fontAlpha = fontAlpha;
+         }   
     }
 
     public void setFontSize(float fontSize) {
-        this.fontSize = fontSize;
+        @synchronized(this){
+             this.fontSize = fontSize;
+        }
     }
 
 
-    public int getFontHeight(float fontSize) {
+    int getFontHeight(float fontSize) {
         mCalcPaint.setTextSize(fontSize);
         Paint.FontMetrics fm = mCalcPaint.getFontMetrics();
         return (int) Math.ceil(fm.descent - fm.top) + 2;
